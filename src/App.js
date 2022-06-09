@@ -12,21 +12,24 @@ const initialState = {
   users: [
     {
       id: 1,
-      username: "printline",
+      username: "정대지",
       email: "test@naver.com",
       active: true,
+      modify: false,
     },
     {
       id: 2,
-      username: "txt",
-      email: "txt@naver.com",
+      username: "헬린이",
+      email: "test@naver.com",
       active: false,
+      modify: false,
     },
     {
       id: 3,
-      username: "asdf",
-      email: "asdf@naver.com",
+      username: "경기",
+      email: "test@naver.com",
       active: false,
+      modify: false,
     },
   ],
 };
@@ -50,6 +53,27 @@ function reducer(state, action) {
         ...state,
         users: state.users.filter((user) => user.id !== action.id),
       };
+    case "MODIFY_USER":
+      return {
+        ...state,
+        users: state.users.map((user) =>
+          user.id === action.id ? { ...user, modify: !user.modify } : user
+        ),
+      };
+    case "UPDATE_USER":
+      return {
+        ...state,
+        users: state.users.map((user) =>
+          user.id === action.id
+            ? {
+                ...user,
+                modify: !user.modify,
+                username: action.username,
+                email: action.email,
+              }
+            : user
+        ),
+      };
     default:
       throw new Error("에러!!");
   }
@@ -64,9 +88,9 @@ function App() {
   const { username, email } = form;
   const nextId = useRef(state.users.length);
   const { users } = state;
-
   const onCreate = useCallback(
     (e) => {
+      nextId.current += 1;
       dispatch({
         type: "CREATE_USER",
         user: {
@@ -75,7 +99,6 @@ function App() {
           email,
         },
       });
-      nextId.current += 1;
       reset();
     },
     [username, email, reset]
@@ -95,19 +118,42 @@ function App() {
     });
   });
 
+  const onModify = useCallback((id) => {
+    dispatch({
+      type: "MODIFY_USER",
+      id,
+    });
+  });
+
+  const onUpdate = useCallback((id, username, email) => {
+    dispatch({
+      type: "UPDATE_USER",
+      id,
+      username,
+      email,
+    });
+  });
+
   const count = useMemo(() => countActiveUsers(users), [users]);
 
   return (
-    <>
+    <div className="container">
       <CreateUser
         username={username}
         email={email}
         onChange={onChange}
         onCreate={onCreate}
       />
-      <UserList users={users} onToggle={onToggle} onRemove={onRemove} />
-      <div>활성 사용자 수: {count}</div>
-    </>
+      <div className="counter">활성 사용자 수: {count}</div>
+      <UserList
+        users={users}
+        onToggle={onToggle}
+        onRemove={onRemove}
+        onModify={onModify}
+        onChange={onChange}
+        onUpdate={onUpdate}
+      />
+    </div>
   );
 }
 
